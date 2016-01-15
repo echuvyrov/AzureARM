@@ -1,0 +1,123 @@
+{
+    "handler": "Microsoft.Compute.MultiVm",
+    "version": "0.0.1-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "clusterNamePrefix",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Cluster name prefix",
+                "toolTip": "This will be used to create the three VM names, Public IP names, NIC names, Load Balancer names, and Virtual Network name: Using the default prefix {TestFlight} would make the VM names = TestFlightVm1 TestFlightVm2 TestFlightVm3 ",
+                "defaultValue": "TestFlight",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z0-9]{4,12}$",
+                    "validationMessage": "Name must be 4-12 chars in length."
+                }
+            },
+            {
+                "name": "adminUsername",
+                "type": "Microsoft.Compute.UserNameTextBox",
+                "label": "Admin username",
+                "toolTip": "The admin username entered here will be used on each of the three test flight VMs.",
+                "defaultValue": "kuser-root",
+                "constraints": {
+                    "required": true
+                    },
+                "osPlatform": "Windows"
+            },
+            {
+                "name": "adminPassword",
+                "type": "Microsoft.Compute.CredentialsCombo",
+                "label": {
+                    "password": "Admin password",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": {
+                    "password": "The admin password entered here will be used on each of the three test flight VMs."
+                },
+                "constraints": {
+                    "required": true
+                },
+                "osPlatform": "Windows"
+            }
+        ],
+        "steps": [
+            {
+                "name": "infrastructureConfig",
+                "label": "Infrastructure settings",
+                "subLabel": {
+                    "preValidation": "Configure the infrastructure settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Infrastructure settings",
+                "elements": [
+                    {
+                        "name": "storageAccount",
+                        "type": "Microsoft.Storage.StorageAccountSelector",
+                        "label": "Select or create a storage account",
+                        "toolTip": "The three Virtual Hard Disks (VHDs) for the VMs will be stored in the 'vhds' blob folder of this storage account.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "defaultValue": {
+                            "type": "Standard_LRS"
+                        }
+                    },
+                    {
+                        "name": "vmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Virtual Machine Size:",
+                        "toolTip": "The compute size of the three virtual machines.",
+                        "recommendedSizes": [
+                            "Standard_A2",
+                            "Standard_A1"
+                        ],
+                        "constraints": {
+                            "allowedSizes": [
+                              "Standard_D1",
+                              "Standard_D2",
+                              "Standard_D3",
+                              "Standard_D4",
+                              "Standard_A1",
+                              "Standard_A2"
+                            ],
+                            "required": true
+                        },
+                        "osPlatform": "Windows",
+                        "imageReference": {
+                            "publisher": "kollective",
+                            "offer": "sd-ecdn-test-flight-vm",
+                            "sku": "kollectiveecdntestflight"
+                        },
+                        "count": 3
+                    },
+                    {
+                        "name": "publicDnsNamePrefix",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Public DNS prefix:",
+                        "toolTip": "The public DNS prefix will be combined with a generated 13-character unique string to create all three VM public DNS entries [dnsprefix][uniquestring]-vm1. Example of resulting Fully Qualified DNS: (e.g. [dnsprefix][uniquestring]-vm1.region.cloudapp.azure.com)",
+                        "defaultValue": "test-flight",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z][a-z0-9-]{1,40}$",
+                            "validationMessage": "Only lower-case alphanumeric characters and hyphen are allowed (no spaces). It must begin with a letter. The length must be shorter than 40 characters."
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "clusterNamePrefix": "[basics('clusterNamePrefix')]",
+            "adminUsername": "[basics('adminUsername')]",
+            "adminPassword": "[basics('adminPassword')]",
+            "storageAccountNewOrExisting" : "[steps('infrastructureConfig').storageAccount.newOrExisting]",
+            "storageAccountName": "[steps('infrastructureConfig').storageAccount.name]",
+            "storageAccountType": "[steps('infrastructureConfig').storageAccount.type]",
+            "existingStorageAccountRG": "[steps('infrastructureConfig').storageAccount.resourceGroup]",
+            "publicDnsNamePrefix": "[steps('infrastructureConfig').publicDnsNamePrefix]",
+            "vmSize": "[steps('infrastructureConfig').vmSize]"
+        }
+    }
+}
